@@ -1,0 +1,10 @@
+.DS_Store
+.Rhistory
+.RData
+data/
+outputs/
+artifacts/
+*.rds
+*.xlsx
+*.parquet
+private-*

@@ -1,0 +1,10 @@
+name: citybus-ridership-analysis
+channels:
+  - conda-forge
+dependencies:
+  - r-base=4.5.3
+  - r-readxl
+  - r-ggplot2
+  - r-caret
+  - r-randomforest
+  - r-rpart

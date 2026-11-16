@@ -1,0 +1,32 @@
+
+Call:
+lm(formula = y ~ tempmax + temp + feelslikemax + feelslikemin + 
+    feelslike + dew + precip + precipcover + sealevelpressure + 
+    cloudcover + uvindex + severerisk, data = small)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-251.215  -29.358   -0.837   52.205  138.390 
+
+Coefficients:
+                   Estimate Std. Error t value Pr(>|t|)    
+(Intercept)      -24382.428  12808.750  -1.904 0.075112 .  
+tempmax            -268.756     67.844  -3.961 0.001119 ** 
+temp                890.628    204.179   4.362 0.000484 ***
+feelslikemax        270.471     73.786   3.666 0.002089 ** 
+feelslikemin        -89.098     18.327  -4.861 0.000173 ***
+feelslike          -745.018    205.321  -3.629 0.002259 ** 
+dew                 -40.662     17.477  -2.327 0.033451 *  
+precip            -2827.191    797.969  -3.543 0.002706 ** 
+precipcover          11.696      8.137   1.437 0.169868    
+sealevelpressure     21.959     12.549   1.750 0.099285 .  
+cloudcover           11.309      2.898   3.902 0.001267 ** 
+uvindex             -77.598     35.856  -2.164 0.045925 *  
+severerisk           18.001      6.417   2.805 0.012703 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 108.2 on 16 degrees of freedom
+Multiple R-squared:  0.773,	Adjusted R-squared:  0.6027 
+F-statistic:  4.54 on 12 and 16 DF,  p-value: 0.002966
+

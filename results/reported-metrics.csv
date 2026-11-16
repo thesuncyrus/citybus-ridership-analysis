@@ -1,0 +1,7 @@
+"model","partition","r_squared","rmse","source","status"
+"Linear regression","Train",0.2446,164.5,"Original final presentation; slide 14","Reported; not independently reproduced as a disjoint holdout"
+"Linear regression","Test",0.2084,162.34,"Original final presentation; slide 14","Reported; not independently reproduced as a disjoint holdout"
+"Decision tree","Train",0.3121,156.98,"Original final presentation; slide 14","Reported; not independently reproduced as a disjoint holdout"
+"Decision tree","Test",0.2922,153.51,"Original final presentation; slide 14","Reported; not independently reproduced as a disjoint holdout"
+"Random forest","Train",0.9554,93.97,"Original final presentation; slide 14","Reported; not independently reproduced as a disjoint holdout"
+"Random forest","Test",0.7546,90.03,"Original final presentation; slide 14","Reported; not independently reproduced as a disjoint holdout"
