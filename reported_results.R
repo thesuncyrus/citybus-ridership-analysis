@@ -20,4 +20,4 @@ p <- ggplot(d, aes(model, r_squared, fill = partition)) +
   labs(title = "Market Square: reported model comparison", x = NULL, y = "Reported R-squared",
     fill = NULL, caption = "Source: final presentation, slide 14. See evaluation-method audit.") +
   theme_minimal(base_size = 12) + theme(panel.grid.minor = element_blank(), legend.position = "top")
-ggsave(file.path(out, "citybus-reported-comparison.svg"), p, width = 9, height = 5, device = grDevices::svg)
+ggsave(file.path(out, "citybus-reported-comparison.svg"), p, width = 9, height = 5, device = svglite::svglite)

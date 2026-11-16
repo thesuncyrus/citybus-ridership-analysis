@@ -9,11 +9,7 @@
 | Evaluation | `audit_source.R`, `verify_results.R` | Chronological separation and prediction-derived R²/RMSE/MAE |
 | Presentation | `diagnostics.R`, `plot.R`, `reported_results.R` | Computed figures and separately sourced presentation table |
 
-The eleven original scripts are retained unchanged. Their original names and
-SHA-256 hashes are in `original-source-manifest.csv`. Weeks 8 and 11 include
-screening, transformations, interactions and variable-selection experiments;
-Weeks 13–15 develop the final model comparison. The run commands consolidate the
-analysis into relative-path scripts and make evaluation definitions explicit.
+Professional historical sources are in src/: exploratory_weather_regression.R retains screening, transformations, interactions and variable selection; historical_model_experiments.R retains the final source experiments, including the annotated split bug. All unchanged originals and checksums remain in a private backup. The top-level run_all.R is the separately corrected diagnostic workflow.
 
 The report credits Chau Nguyen (Cyrus Nguyen in the original report) with
 off-campus analysis and the conclusion. Other team sections remain credited to

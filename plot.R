@@ -13,4 +13,4 @@ ggsave(file.path(out, "citybus-holdout.svg"),
   coord_equal() + theme_minimal(base_size = 12) +
   labs(title = "Route 1A: selected-period holdout", x = "Observed ridership", y = "Predicted ridership",
     subtitle = paste("Disjoint test dates;", period_label)),
-  width = 8, height = 5, device = grDevices::svg)
+  width = 8, height = 5, device = svglite::svglite)

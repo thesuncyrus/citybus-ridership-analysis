@@ -1,11 +1,14 @@
+# Historical model experiments with known split defects retained for traceability.
+# Use run_all.R for the separately corrected evaluation; this file is not valid holdout evidence.
+args <- commandArgs(trailingOnly=TRUE)
+if (!length(args)) stop("Supply the authorized off-campus workbook.")
+workbook <- args[1]
 library(readxl)
 library(caret)
-d <- read_xlsx("Off Campus routes.xlsx", sheet=2, col_names = TRUE)
+d <- read_xlsx(workbook, sheet=2, col_names = TRUE)
 d <- as.data.frame(d)
 d$WorkDate <- as.Date(d$WorkDate)
 dim(d)
-str(d)
-View(d)
 
 # Handling missing data
 mean_ridership1 = mean(d$`1A`, na.rm = T)
@@ -23,14 +26,11 @@ d$`6A` = ifelse(is.na(d$`6A`),
 d$`6B` = ifelse(is.na(d$`6B`), 
                 mean_ridership4, d$`6B`)
 
-str(d)
 cor(d[2:ncol(d)])
 
 ## 1A: Sep - Nov
 d3_1 <- d[240:268, c(2, 6:ncol(d))]
-head(d3_1)
 
-str(d3_1)
 
 ### Split dataset into training and test set
 train <- d3_1[1:20, ]
@@ -73,7 +73,6 @@ set.seed(1234) # set a seed so you can replicate your results
 library(caret)
 
 # identify records that will be used in the training set. Here we are doing a
-# 70/30 train-test split. You might modify this.
 inTrain <- createDataPartition(y = d3_1$`1A`,   # outcome variable
                                p = .70,   # % of training data you want
                                list = F)
@@ -107,7 +106,6 @@ ctrl <- trainControl(method = "none",
                      allowParallel = TRUE)
 
 # Manually specify the model hyperparameters
-# You must provide a tuneGrid when using method = "none"
 xgb_grid <- expand.grid(
   nrounds = 100,
   max_depth = 6,
@@ -260,14 +258,11 @@ actual <- test_d$`1A`
 
 #### Train on Different set: July, August, November 
 d4_1 <- d[179:297, c(2, 6:ncol(d))]
-head(d4_1)
 
-str(d4_1)
 
 set.seed(1234) # set a seed so you can replicate your results
 
 # identify records that will be used in the training set. Here we are doing a
-# 70/30 train-test split. You might modify this.
 inTrain <- createDataPartition(y = d4_1$`1A`,   # outcome variable
                                p = .80,   # % of training data you want
                                list = F)
@@ -331,6 +326,7 @@ actual <- test_d$`1A`
 
 ### Train and Test sequentially split
 train <- d4_1[1:95, ]
+# Known original defect: descending indices overlap 71 training rows. Intentionally retained.
 test <- d4_1[96:ncol(d4_1), ]
 
 tree_model <- rpart(`1A` ~ .,
@@ -401,7 +397,7 @@ actual <- test$`1A`
 # Calculate RMSE
 (rmse <- sqrt(mean((rf_preds - actual)^2))) # RMSE test: 162.3368
 
-### KNN
+### XGBoost on the sequential partition
 model2 <- train(`1A` ~ .,
                 data = train,
                 method = "xgbTree",
@@ -498,8 +494,8 @@ ggplot(data = NULL, aes(x = actual, y = rf_preds)) +
   ) +
   coord_equal()  # Ensures x and y are on the same scale
 
-### Gini Feature Importance
-importance_df <- as.data.frame(importance(model7, type = 2))  # type = 2 = Gini
+### Regression node-impurity importance
+importance_df <- as.data.frame(randomForest::importance(model7$finalModel, type = 2))  # extract the underlying randomForest model from the caret wrapper
 importance_df$Variable <- rownames(importance_df)
 
 
@@ -515,3 +511,6 @@ importance_df$Variable <- rownames(importance_df)
 
 
 
+
+# Aggregate output only; the historical split overlap remains intentionally visible.
+write.csv(data.frame(model="Random Forest", evaluation="historical overlapping test indices", n_train=nrow(train), n_test=nrow(test), overlap=length(intersect(rownames(train),rownames(test))), r_squared=rsq, rmse=rmse), "historical-rf-metrics.csv", row.names=FALSE)

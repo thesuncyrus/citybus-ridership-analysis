@@ -7,7 +7,7 @@ for (pkg in c("caret", "randomForest", "rpart"))
 args <- commandArgs(trailingOnly = TRUE)
 if (!length(args)) stop("Usage: Rscript run.R workbook.xlsx [output-directory] [period]")
 out <- if (length(args) > 1) args[2] else "outputs"
-period <- if (length(args) > 2) args[3] else "report_months"
+period <- if (length(args) > 2) args[3] else "source_rows"
 dir.create(out, recursive = TRUE, showWarnings = FALSE)
 d <- read_citybus(args[1])
 split <- chronological_split(select_period(d, period))

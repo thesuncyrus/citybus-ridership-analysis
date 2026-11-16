@@ -32,7 +32,7 @@ write.csv(monthly, file.path(out, "monthly-summary.csv"), row.names = FALSE)
 write.csv(weekly, file.path(out, "weekday-summary.csv"), row.names = FALSE)
 theme_set(theme_minimal(base_size = 12) + theme(panel.grid.minor = element_blank(),
   plot.title = element_text(face = "bold"), plot.background = element_rect(fill = "#faf9f6", colour = NA)))
-save_plot <- function(name, p, width = 9, height = 5) ggsave(file.path(out, name), p, width = width, height = height, device = grDevices::svg)
+save_plot <- function(name, p, width = 9, height = 5) ggsave(file.path(out, name), p, width = width, height = height, device = svglite::svglite)
 cols <- c("1A" = "#234f60", "2B" = "#9e623e", "6A" = "#4c7c69", "6B" = "#82709a")
 save_plot("citybus-monthly.svg", ggplot(monthly, aes(period, mean, colour = route)) +
   geom_line(linewidth = .8) + geom_point(size = 2) + scale_colour_manual(values = cols) +

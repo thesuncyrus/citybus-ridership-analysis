@@ -7,7 +7,7 @@ p <- read.csv(file.path(out, "predictions.csv"))
 imp <- read.csv(file.path(out, "importance.csv"))
 theme_set(theme_minimal(base_size = 12) + theme(panel.grid.minor = element_blank()))
 save_plot <- function(name, plot, h = 5) ggsave(file.path(out, name), plot,
-  width = 9, height = h, device = grDevices::svg)
+  width = 9, height = h, device = svglite::svglite)
 test <- subset(m, partition == "test")
 save_plot("citybus-model-comparison.svg", ggplot(test, aes(model, rmse, fill = model)) +
   geom_col(width = .65) + facet_wrap(~route, scales = "free_y") +

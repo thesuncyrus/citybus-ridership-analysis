@@ -31,6 +31,6 @@ ggsave(file.path(out, "citybus-early-fit.svg"),
     subtitle = sprintf("In-sample R-squared = %.6f; September 2023", m["r_squared"]),
     x = "Observed ridership", y = "Fitted ridership",
     caption = "Exploratory fit; not a test-set result."),
-  width = 8, height = 5, device = grDevices::svg)
+  width = 8, height = 5, device = svglite::svglite)
 stopifnot(nrow(small) == 29, round(m["r_squared"], 3) == .773)
 print(result)
