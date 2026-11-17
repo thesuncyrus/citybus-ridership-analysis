@@ -184,8 +184,8 @@
 <text x='36.07' y='200.36' text-anchor='end' style='font-size: 9.60px;fill: #4D4D4D; font-family: "Arial";' textLength='15.98px' lengthAdjust='spacingAndGlyphs'>500</text>
 <text transform='translate(14.57,180.47) rotate(-90)' text-anchor='middle' style='font-size: 12.00px; font-family: "Arial";' textLength='60.00px' lengthAdjust='spacingAndGlyphs'>Test RMSE</text>
 <text x='41.45' y='33.88' style='font-size: 12.00px; font-family: "Arial";' textLength='68.03px' lengthAdjust='spacingAndGlyphs'>source_rows</text>
-<text x='41.45' y='16.28' style='font-size: 14.40px; font-family: "Arial";' textLength='268.00px' lengthAdjust='spacingAndGlyphs'>Selected-period reconstruction: test errors</text>
-<text x='642.02' y='352.01' text-anchor='end' style='font-size: 9.60px; font-family: "Arial";' textLength='350.14px' lengthAdjust='spacingAndGlyphs'>Chronological 80/20; disjoint dates. Same observed test outcomes for each model.</text>
+<text x='41.45' y='16.28' style='font-size: 14.40px; font-family: "Arial";' textLength='222.38px' lengthAdjust='spacingAndGlyphs'>Selected-period model comparison</text>
+<text x='642.02' y='352.01' text-anchor='end' style='font-size: 9.60px; font-family: "Arial";' textLength='349.59px' lengthAdjust='spacingAndGlyphs'>Chronological 80/20 evaluation; the same observed test outcomes for each model.</text>
 </g>
 </g>
 </svg>

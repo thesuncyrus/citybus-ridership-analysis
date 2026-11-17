@@ -1,5 +1,6 @@
 data/*
 !data/README.md
+!data/off_campus_routes.csv
 outputs/
 artifacts/
 *.rds
@@ -14,4 +15,4 @@ __pycache__/
 *.xlsx
 
 Rplots.pdf
-historical-rf-metrics.csv
+model-experiment-metrics.csv

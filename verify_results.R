@@ -1,5 +1,5 @@
 # Check identities, residual calculations and frozen computed aggregates after a run.
-# Historical reported scores are never inputs to fitting or to this check.
+# Metrics are calculated directly from observed outcomes and predictions.
 args <- commandArgs(trailingOnly = TRUE)
 out <- if (length(args)) args[1] else "outputs"
 source("functions.R")

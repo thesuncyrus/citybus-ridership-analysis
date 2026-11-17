@@ -11,8 +11,8 @@ save_plot <- function(name, plot, h = 5) ggsave(file.path(out, name), plot,
 test <- subset(m, partition == "test")
 save_plot("citybus-model-comparison.svg", ggplot(test, aes(model, rmse, fill = model)) +
   geom_col(width = .65) + facet_wrap(~route, scales = "free_y") +
-  labs(title = "Selected-period reconstruction: test errors", subtitle = unique(m$period),
-    x = NULL, y = "Test RMSE", caption = "Chronological 80/20; disjoint dates. Same observed test outcomes for each model.") +
+  labs(title = "Selected-period model comparison", subtitle = unique(m$period),
+    x = NULL, y = "Test RMSE", caption = "Chronological 80/20 evaluation; the same observed test outcomes for each model.") +
   theme(legend.position = "none", axis.text.x = element_text(angle = 20, hjust = 1)))
 top <- subset(imp, route == "1A"); top <- head(top[order(-top$decrease_node_impurity), ], 10)
 save_plot("citybus-importance.svg", ggplot(top, aes(reorder(feature, decrease_node_impurity), decrease_node_impurity)) +

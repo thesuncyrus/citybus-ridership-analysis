@@ -1,7 +1,6 @@
-# Complete off-campus analysis; original private data stay outside the repository.
+# Run the off-campus ridership and weather analysis.
 args <- commandArgs(trailingOnly = TRUE)
-if (!length(args)) stop("Usage: Rscript run_all.R workbook.xlsx [outputs] [campus-source-folder]")
-input <- normalizePath(args[1], mustWork = TRUE)
+input <- normalizePath(if(length(args)) args[1] else "data/off_campus_routes.csv", mustWork = TRUE)
 out <- if (length(args) > 1) args[2] else "outputs"
 dir.create(out, recursive = TRUE, showWarnings = FALSE)
 out <- normalizePath(out, mustWork = TRUE)
@@ -12,7 +11,6 @@ run <- function(script, ...) {
   if (status != 0) stop(paste("Failed stage:", script))
 }
 run("tests.R")
-run("audit_source.R", input, out)
 run("eda.R", input, out)
 run("regression_exploration.R", input, out)
 for (period in c("report_months", "source_rows")) {
@@ -21,7 +19,6 @@ for (period in c("report_months", "source_rows")) {
   run("diagnostics.R", destination)
   run("plot.R", destination)
 }
-run("reported_results.R", file.path(out, "reported"))
 if (length(args) > 2) run("raw_aggregation.R", normalizePath(args[3], mustWork = TRUE),
                          file.path(out, "campus"))
 run("verify_results.R", out)

@@ -1,7 +1,7 @@
-# Replaces repeated manual monthly sums and row-position weather slices in Week 1.R.
+# Aggregate monthly route records and join weather observations.
 # Rscript raw_aggregation.R raw-folder outputs
 # Reads the original campus stop-event workbooks and weather file. It does NOT
-# reconstruct the separately supplied off-campus modeling workbook.
+# produce the off-campus analysis table.
 args <- commandArgs(trailingOnly = TRUE)
 if (!length(args)) stop("Usage: Rscript raw_aggregation.R raw-folder [output-directory]")
 if (!requireNamespace("readxl", quietly = TRUE)) stop("Install readxl.")

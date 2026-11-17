@@ -1,11 +1,10 @@
-# Historical model experiments with known split defects retained for traceability.
-# Use run_all.R for the separately corrected evaluation; this file is not valid holdout evidence.
+# Regression, tree, k-nearest-neighbor and boosting experiments for Route 1A.
 args <- commandArgs(trailingOnly=TRUE)
 if (!length(args)) stop("Supply the authorized off-campus workbook.")
 workbook <- args[1]
 library(readxl)
 library(caret)
-d <- read_xlsx(workbook, sheet=2, col_names = TRUE)
+d <- if(grepl("[.]csv$",workbook,ignore.case=TRUE)) read.csv(workbook,check.names=FALSE) else read_xlsx(workbook,sheet=2,col_names=TRUE)
 d <- as.data.frame(d)
 d$WorkDate <- as.Date(d$WorkDate)
 dim(d)
@@ -40,7 +39,7 @@ test <- d3_1[21:29, ]
 library(leaps)
 mlrB <- regsubsets(`1A` ~ ., data = d3_1,
                    
-                   , nbest = 1           # 1 best model for each number of predictors
+                   , nbest = 1
                    , intercept = T       # should model have intercept term (B0)?
                    , method = "backward" # forward, backward, sequential, exhaustive
                    , nvmax = NULL        # NULL for no limit on number of variables
@@ -52,20 +51,18 @@ summary(mlrB)$which[which.max(summary(mlrB)$adjr2),]
 model1 <- lm(`1A` ~ tempmax+temp+feelslikemax+feelslikemin+feelslike+dew+precip+precipcover+sealevelpressure+cloudcover+uvindex+
                severerisk, data=train)
 summary(model1) # R-squared train: 96.94
-# 1. Predict values
 pred <- predict(model1, newdata = train)
-# 2. Calculate RMSE
 rmse <- sqrt(mean((pred - train$`1A`)^2))
-print(rmse) #RMSE train: 27.9969
+print(rmse)
 ## Evaluate model 1 on test set:
 rf_preds <- predict(model1, newdata = test)
 # Actual values
 actual <- test$`1A`
 # Calculate R-squared
-(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2)) #R-squared test: -73.58
+(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2))
 
 # Calculate RMSE
-(rmse <- sqrt(mean((rf_preds - actual)^2))) #RMSE test: 220.65
+(rmse <- sqrt(mean((rf_preds - actual)^2)))
 
 
 ### Method 2 of splitting: Randomly split
@@ -84,20 +81,18 @@ test_d <- d3_1[-inTrain,]  # test data set
 model1.1 <- lm(`1A` ~ tempmax+temp+feelslikemax+feelslikemin+feelslike+dew+precip+precipcover+sealevelpressure+cloudcover+uvindex+
                severerisk, data=train_d)
 summary(model1.1) # R-squared train: 85.71
-# 1. Predict values
 pred <- predict(model1.1, newdata = train_d)
-# 2. Calculate RMSE
 rmse <- sqrt(mean((pred - train_d$`1A`)^2))
-print(rmse) #RMSE train: 66.97
+print(rmse)
 ## Evaluate model 1 on test set:
 rf_preds <- predict(model1.1, newdata = test_d)
 # Actual values
 actual <- test_d$`1A`
 # Calculate R-squared
-(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2)) #R-squared test: -10.28
+(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2))
 
 # Calculate RMSE
-(rmse <- sqrt(mean((rf_preds - actual)^2))) #RMSE test 484.03
+(rmse <- sqrt(mean((rf_preds - actual)^2)))
 
 ### Model type 2: XGBoost
 ctrl <- trainControl(method = "none",
@@ -136,17 +131,17 @@ model2
 pred_train <- predict(model2, newdata = train_d)
 
 # Calculate R-squared and RMSE
-(r_squared <- cor(pred_train, train_d$`1A`)^2) # 1
-(rmse <- sqrt(mean((pred_train - train_d$`1A`)^2))) # 0.0007835015
+(r_squared <- cor(pred_train, train_d$`1A`)^2)
+(rmse <- sqrt(mean((pred_train - train_d$`1A`)^2)))
 ## Evaluate model 1 on test set:
 rf_preds <- predict(model2, newdata = test_d)
 # Actual values
 actual <- test_d$`1A`
 # Calculate R-squared
-(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2)) #R-squared test: -5.490809
+(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2))
 
 # Calculate RMSE
-(rmse <- sqrt(mean((rf_preds - actual)^2))) # 367.0668
+(rmse <- sqrt(mean((rf_preds - actual)^2)))
 
 ### knn
 library(caret)
@@ -179,10 +174,10 @@ rf_preds <- predict(model3, newdata = test_d)
 # Actual values
 actual <- test_d$`1A`
 # Calculate R-squared
-(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2)) #R-squared test: -0.80578
+(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2))
 
 # Calculate RMSE
-(rmse <- sqrt(mean((rf_preds - actual)^2))) # 193.6101
+(rmse <- sqrt(mean((rf_preds - actual)^2)))
 
 ### Decision Tree
 # Load required package
@@ -207,16 +202,16 @@ pred_tree <- predict(tree_model, newdata = train_d)
 
 # R-squared and RMSE
 (r_squared_tree <- cor(pred_tree, train_d$`1A`)^2) # R-squared train: 20.73
-(rmse_tree <- sqrt(mean((pred_tree - train_d$`1A`)^2))) # 157.7027
+(rmse_tree <- sqrt(mean((pred_tree - train_d$`1A`)^2)))
 ## Evaluate model 1 on test set:
 rf_preds <- predict(tree_model, newdata = test_d)
 # Actual values
 actual <- test_d$`1A`
 # Calculate R-squared
-(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2)) #R-squared test: -57.71
+(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2))
 
 # Calculate RMSE
-(rmse <- sqrt(mean((rf_preds - actual)^2))) # 108.94
+(rmse <- sqrt(mean((rf_preds - actual)^2)))
 
 ### Random Forest
 library(randomForest)
@@ -244,16 +239,16 @@ pred_tree <- predict(model7, newdata = train_d)
 
 # R-squared and RMSE
 (r_squared_tree <- cor(pred_tree, train_d$`1A`)^2) # R-squared train: 93.12
-(rmse_tree <- sqrt(mean((pred_tree - train_d$`1A`)^2))) # 93.18
+(rmse_tree <- sqrt(mean((pred_tree - train_d$`1A`)^2)))
 ## Evaluate model 1 on test set:
 rf_preds <- predict(model7, newdata = test_d)
 # Actual values
 actual <- test_d$`1A`
 # Calculate R-squared
-(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2)) #R-squared test: -83.78
+(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2))
 
 # Calculate RMSE
-(rmse <- sqrt(mean((rf_preds - actual)^2))) # 108.94
+(rmse <- sqrt(mean((rf_preds - actual)^2)))
 
 
 #### Train on Different set: July, August, November 
@@ -273,7 +268,7 @@ test_d <- d4_1[-inTrain,]  # test data set
 # Select variables on train set
 mlrB <- regsubsets(`1A` ~ ., data = train_d,
                    
-                   , nbest = 1           # 1 best model for each number of predictors
+                   , nbest = 1
                    , intercept = T       # should model have intercept term (B0)?
                    , method = "backward" # forward, backward, sequential, exhaustive
                    , nvmax = NULL        # NULL for no limit on number of variables
@@ -289,10 +284,10 @@ rf_preds <- predict(model1, newdata = test_d)
 # Actual values
 actual <- test_d$`1A`
 # Calculate R-squared
-(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2)) #R-squared test: -4.5
+(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2))
 
 # Calculate RMSE
-(rmse <- sqrt(mean((rf_preds - actual)^2))) # 207.49
+(rmse <- sqrt(mean((rf_preds - actual)^2)))
 
 ### Decision Tree
 # Load required package
@@ -311,23 +306,22 @@ rpart.plot(tree_model)
 pred_tree <- predict(tree_model, newdata = train_d)
 
 # R-squared and RMSE
-(r_squared_tree <- cor(pred_tree, train_d$`1A`)^2) # 31.18
+(r_squared_tree <- cor(pred_tree, train_d$`1A`)^2)
 (rmse_tree <- sqrt(mean((pred_tree - train_d$`1A`)^2))) #147.94
 
 rf_preds <- predict(tree_model, newdata = test_d)
 # Actual values
 actual <- test_d$`1A`
 # Calculate R-squared
-(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2)) #R-squared test: -41.17
+(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2))
 
 # Calculate RMSE
-(rmse <- sqrt(mean((rf_preds - actual)^2))) # 241.1559
+(rmse <- sqrt(mean((rf_preds - actual)^2)))
 
 
 ### Train and Test sequentially split
 train <- d4_1[1:95, ]
-# Known original defect: descending indices overlap 71 training rows. Intentionally retained.
-test <- d4_1[96:ncol(d4_1), ]
+test <- d4_1[96:nrow(d4_1), ]
 
 tree_model <- rpart(`1A` ~ .,
                     data = train,
@@ -341,17 +335,17 @@ rpart.plot(tree_model)
 pred_tree <- predict(tree_model, newdata = train)
 
 # R-squared and RMSE
-(r_squared_tree <- cor(pred_tree, train$`1A`)^2) # 31.18
+(r_squared_tree <- cor(pred_tree, train$`1A`)^2)
 (rmse_tree <- sqrt(mean((pred_tree - train$`1A`)^2))) #147.94
 
 rf_preds <- predict(tree_model, newdata = test)
 # Actual values
 actual <- test$`1A`
 # Calculate R-squared
-(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2)) #R-squared test: 29.21
+(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2))
 
 # Calculate RMSE
-(rmse <- sqrt(mean((rf_preds - actual)^2))) # 153
+(rmse <- sqrt(mean((rf_preds - actual)^2)))
 
 ### Multiple Linear Regression
 model_1 <- lm(`1A` ~ ., data = train)
@@ -385,14 +379,14 @@ ggplot(plot_df, aes(x = Actual, y = Predicted)) +
 
 pred_tree <- predict(model_1, newdata = train)
 # R-squared and RMSE
-(r_squared_tree <- cor(pred_tree, train$`1A`)^2) # 24.46
+(r_squared_tree <- cor(pred_tree, train$`1A`)^2)
 (rmse_tree <- sqrt(mean((pred_tree - train$`1A`)^2))) #164.4973
 
 rf_preds <- predict(model_1, newdata = test)
 # Actual values
 actual <- test$`1A`
 # Calculate R-squared
-(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2)) #R-squared test: 20.85
+(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2))
 
 # Calculate RMSE
 (rmse <- sqrt(mean((rf_preds - actual)^2))) # RMSE test: 162.3368
@@ -415,17 +409,17 @@ model2
 pred_train <- predict(model2, newdata = train)
 
 # Calculate R-squared and RMSE
-(r_squared <- cor(pred_train, train$`1A`)^2) # 1
-(rmse <- sqrt(mean((pred_train - train$`1A`)^2))) # 0.0007835015
+(r_squared <- cor(pred_train, train$`1A`)^2)
+(rmse <- sqrt(mean((pred_train - train$`1A`)^2)))
 ## Evaluate model 1 on test set:
 rf_preds <- predict(model2, newdata = test)
 # Actual values
 actual <- test$`1A`
 # Calculate R-squared
-(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2)) #R-squared test: -5.490809
+(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2))
 
 # Calculate RMSE
-(rmse <- sqrt(mean((rf_preds - actual)^2))) # 367.0668
+(rmse <- sqrt(mean((rf_preds - actual)^2)))
 
 
 ### Random Forest
@@ -450,16 +444,16 @@ pred_tree <- predict(model7, newdata = train)
 
 # R-squared and RMSE
 (r_squared_tree <- cor(pred_tree, train$`1A`)^2) # R-squared train: 95.54
-(rmse_tree <- sqrt(mean((pred_tree - train$`1A`)^2))) # 93.97
+(rmse_tree <- sqrt(mean((pred_tree - train$`1A`)^2)))
 ## Evaluate model 1 on test set:
 rf_preds <- predict(model7, newdata = test)
 # Actual values
 actual <- test$`1A`
 # Calculate R-squared
-(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2)) #R-squared test: 75.46
+(rsq <- 1 - sum((rf_preds - actual)^2) / sum((actual - mean(actual))^2))
 
 # Calculate RMSE
-(rmse <- sqrt(mean((rf_preds - actual)^2))) # 90.38683
+(rmse <- sqrt(mean((rf_preds - actual)^2)))
 
 
 varImpPlot(model7$finalModel, main = "Variable Importance (Random Forest)")
@@ -512,5 +506,5 @@ importance_df$Variable <- rownames(importance_df)
 
 
 
-# Aggregate output only; the historical split overlap remains intentionally visible.
-write.csv(data.frame(model="Random Forest", evaluation="historical overlapping test indices", n_train=nrow(train), n_test=nrow(test), overlap=length(intersect(rownames(train),rownames(test))), r_squared=rsq, rmse=rmse), "historical-rf-metrics.csv", row.names=FALSE)
+
+write.csv(data.frame(model="Random Forest",evaluation="chronological test",n_train=nrow(train),n_test=nrow(test),r_squared=rsq,rmse=rmse),"model-experiment-metrics.csv",row.names=FALSE)

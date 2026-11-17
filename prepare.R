@@ -2,7 +2,7 @@
 # Targets are the workbook's ridership measure, not asserted to be raw boardings.
 read_citybus <- function(path) {
   if (!requireNamespace("readxl", quietly = TRUE)) stop("Install readxl.")
-  d <- as.data.frame(readxl::read_excel(path, sheet = 2))
+  d <- if (grepl("[.]csv$",path,ignore.case=TRUE)) read.csv(path,check.names=FALSE) else as.data.frame(readxl::read_excel(path, sheet = 2))
   required <- c("WorkDate", "1A", "2B", "6A", "6B", weather_features)
   if (!all(required %in% names(d))) stop("Workbook is missing required columns.")
   d <- d[, required]

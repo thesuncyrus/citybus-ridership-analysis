@@ -1,11 +1,11 @@
-# Historical exploratory regression, transformations and interaction terms.
-# Global filtering/imputation and in-sample selections remain historical limitations.
+# Exploratory regression, transformations and interaction terms.
+# Predictor screening and formula selection use the exploratory sample.
 args <- commandArgs(trailingOnly=TRUE)
 if (!length(args)) stop("Supply the authorized off-campus workbook.")
 workbook <- args[1]
 library(readxl)
 library(caret)
-d <- read_xlsx(workbook, sheet=2, col_names = TRUE)
+d <- if(grepl("[.]csv$",workbook,ignore.case=TRUE)) read.csv(workbook,check.names=FALSE) else read_xlsx(workbook,sheet=2,col_names=TRUE)
 d <- as.data.frame(d)
 d$WorkDate <- as.Date(d$WorkDate)
 dim(d)

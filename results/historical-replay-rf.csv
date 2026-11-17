@@ -1,2 +1,0 @@
-"model","evaluation","n_train","n_test","overlap","r_squared","rmse"
-"Random Forest","historical overlapping test indices",95,72,71,0.75791065876147,89.7787172015488

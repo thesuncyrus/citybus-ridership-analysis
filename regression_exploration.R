@@ -9,7 +9,7 @@ out <- if (length(args) > 1) args[2] else "outputs"
 dir.create(out, recursive = TRUE, showWarnings = FALSE)
 d <- read_citybus(args[1])
 small <- d[240:268, ]; small$y <- small[["1A"]]
-# The selected formula appears in Week 8 and Week 15.
+# Weather predictors for the selected Route 1A regression.
 model <- lm(y ~ tempmax + temp + feelslikemax + feelslikemin + feelslike +
   dew + precip + precipcover + sealevelpressure + cloudcover + uvindex + severerisk,
   data = small)

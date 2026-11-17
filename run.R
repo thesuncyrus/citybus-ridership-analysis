@@ -1,4 +1,4 @@
-# Selected-period reconstruction of the final project's model comparison.
+# Model comparison within specified observation periods.
 # Rscript run.R workbook.xlsx outputs [report_months|source_rows]
 # Reported scores are never used in fitting, tuning or evaluation.
 source("functions.R"); source("prepare.R")
@@ -64,6 +64,6 @@ saveRDS(models, file.path(out, "models.rds"))
 writeLines(c(paste("Period:", period), paste("Workbook MD5:", tools::md5sum(args[1])),
   "Seed 1234 reset before each stochastic model; no score targeting.",
   "R-squared = 1-SSE/SST throughout. cor^2 is a separate field.",
-  "Week 15 used cor^2 for training and 1-SSE/SST for testing.",
+  "R-squared is 1-SSE/SST; squared correlation is reported separately.",
   capture.output(sessionInfo())), file.path(out, "run-info.txt"))
 print(subset(do.call(rbind, metrics), route == "1A" & partition == "test"))
