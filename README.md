@@ -23,7 +23,7 @@ The 29-observation Route 1A regression fit had R² = 0.773. The report's larger 
 | Decision tree | 0.3121 | 0.2922 | 156.98 | 153.51 |
 | Random Forest | 0.9554 | 0.7546 | 93.97 | 90.03 |
 
-These values are transcribed from the report in [`results/report-model-comparison.csv`](results/report-model-comparison.csv), together with the original training and evaluation row selections. Training scores are squared correlations; evaluation R² is calculated as 1−SSE/SST.
+These values are transcribed from the report in [`results/report-model-comparison.csv`](results/report-model-comparison.csv), together with the evaluation context. Training scores are squared correlations; evaluation R² is calculated as 1−SSE/SST.
 
 Wind direction and sea-level pressure led the report's Random Forest importance ranking. Feature importance describes contributions to the fitted model, not causal effects. The findings supported discussions of route-specific scheduling using weather and academic timing; no deployed scheduling gain was measured.
 
