@@ -6,6 +6,20 @@ if (!length(args)) stop("Supply the authorized off-campus workbook.")
 workbook <- args[1]
 library(readxl)
 library(caret)
+source("src/time_segments.R")
+out <- if(length(args)>1) args[2] else "outputs/exploratory-weather"
+dir.create(out, recursive=TRUE, showWarnings=FALSE)
+pdf(file.path(out, "exploratory-diagnostics.pdf"))
+# Removing no columns must preserve the input, including one-column frames.
+drop_columns <- function(x, indices) {
+  if(length(indices)) x[, -indices, drop=FALSE] else x
+}
+# A screened predictor is omitted from subsequent exploratory formulas.
+retained_formula <- function(predictors, data, response="y") {
+  retained <- intersect(predictors, names(data))
+  if(!length(retained)) stop("No requested predictors remain after screening.")
+  reformulate(retained, response=as.name(response))
+}
 d <- if(grepl("[.]csv$",workbook,ignore.case=TRUE)) read.csv(workbook,check.names=FALSE) else read_xlsx(workbook,sheet=2,col_names=TRUE)
 d <- as.data.frame(d)
 d$WorkDate <- as.Date(d$WorkDate)
@@ -19,7 +33,7 @@ highCorr <- sum(abs(descrCor[upper.tri(descrCor)]) > .85)
 summary(descrCor[upper.tri(descrCor)])
 
 highlyCorDescr <- findCorrelation(descrCor, cutoff = 0.85)
-filteredDescr <- d[,6:ncol(d)][,-highlyCorDescr] # remove those specific columns
+filteredDescr <- drop_columns(d[,6:ncol(d),drop=FALSE], highlyCorDescr)
 descrCor2 <- cor(filteredDescr)                  # calculate a new cor matrix
 # summarize those correlations to see if all features are now within our range
 summary(descrCor2[upper.tri(descrCor2)])
@@ -48,19 +62,20 @@ d$`6B` = ifelse(is.na(d$`6B`),
 
 
 
-d3_1 <- d[240:268, c(2, 6:ncol(d))]
+source_rows <- citybus_segment_rows(d, "exploratory")
+d3_1 <- d[source_rows, c(2, 6:ncol(d)), drop=FALSE]
 
 
 preProcValues <- preProcess(d3_1[,2:ncol(d3_1)], method = c("range"))
 d3_1 <- predict(preProcValues, d3_1)
 
-hist(d3_1$tempmin)
+if("tempmin" %in% names(d3_1)) hist(d3_1$tempmin)
 
 d3_copy <- d3_1
 d3_copy$`1A` <- log(d3_copy$`1A` + 1)  # Adding 1 to handle zero values if they exist
 d3_copy$y <- NULL
 
-model4 <- lm(`1A` ~ precipprob+precipcover+winddir+sealevelpressure+cloudcover+visibility+severerisk, data=d3_copy)
+model4 <- lm(retained_formula(c("precipprob","precipcover","winddir","sealevelpressure","cloudcover","visibility","severerisk"), d3_copy, "1A"), data=d3_copy)
 summary(model4)
 
 
@@ -71,7 +86,7 @@ summary(model4)
 
 
 
-mlrB <- regsubsets(`1A` ~ ., data = d3_1,
+mlrB <- leaps::regsubsets(`1A` ~ ., data = d3_1,
                    
                    , nbest = 1           # 1 best model for each number of predictors
                    , intercept = T       # should model have intercept term (B0)?
@@ -81,7 +96,7 @@ mlrB <- regsubsets(`1A` ~ ., data = d3_1,
 summary(mlrB)$which[which.max(summary(mlrB)$adjr2),]
 
 # Model 4:
-model4 <- lm(`1A` ~  precipprob+precipcover+ sealevelpressure+visibility+severerisk, 
+model4 <- lm(retained_formula(c("precipprob","precipcover","sealevelpressure","visibility","severerisk"), d3_1, "1A"),
              data = d3_1)
 summary(model4)
 
@@ -92,7 +107,7 @@ hist(residuals)
 
 ### Remove non-variable features
 nzv <- nearZeroVar(d3_1, saveMetrics = TRUE)
-d3_1 <- d3_1[, c(TRUE,!nzv$zeroVar[2:ncol(d3_1)])]
+d3_1 <- d3_1[, c(TRUE,!nzv$zeroVar[2:ncol(d3_1)]), drop=FALSE]
 
 library(caret)
 descrCor <-  cor(d3_1[,2:ncol(d3_1)])                           # correlation matrix
@@ -107,7 +122,7 @@ sum(is.na(descrCor))  # Count NA values
 colSums(is.na(d3_1))  # Identify columns with missing values
 
 
-filteredDescr <- d3_1[,2:ncol(d3_1)][,-highlyCorDescr] # remove those specific columns
+filteredDescr <- drop_columns(d3_1[,2:ncol(d3_1),drop=FALSE], highlyCorDescr)
 descrCor2 <- cor(filteredDescr)                  # calculate a new cor matrix
 # summarize those correlations to see if all features are now within our range
 summary(descrCor2[upper.tri(descrCor2)])
@@ -130,10 +145,10 @@ comboInfo <- findLinearCombos(d3_1)
 comboInfo
 
 # remove columns identified that led to linear combos
-d3_1 <- d3_1[, -comboInfo$remove]
+d3_1 <- drop_columns(d3_1, comboInfo$remove)
 
 # remove the "ones" column in the first column
-d3_1 <- d3_1[, c(2:ncol(d3_1))]
+d3_1 <- d3_1[, setdiff(names(d3_1), "ones"), drop=FALSE]
 
 # Add the target variable back to our data.frame
 d3_1 <- cbind(y, d3_1)
@@ -146,7 +161,7 @@ preProcValues <- preProcess(d3_1[,2:ncol(d3_1)], method = c("center", "scale", "
 # this, but it does!
 d3_1 <- predict(preProcValues, d3_1)
 
-mlrB <- regsubsets(`1A` ~ ., data = d3_1,
+mlrB <- leaps::regsubsets(y ~ ., data = d3_1,
                    
                    , nbest = 1           # 1 best model for each number of predictors
                    , intercept = T       # should model have intercept term (B0)?
@@ -155,7 +170,13 @@ mlrB <- regsubsets(`1A` ~ ., data = d3_1,
 )
 summary(mlrB)$which[which.max(summary(mlrB)$adjr2),]
 
-model5 <- lm(`1A` ~ precipprob+precipcover+winddir+sealevelpressure+visibility+uvindex+severerisk, 
+# The original exclusions refer to rows in the full input table.
+excluded_source_rows <- c(242L, 262L)
+keep_rows <- !source_rows %in% excluded_source_rows
+d3_clean <- d3_1[keep_rows, , drop=FALSE]
+write.csv(data.frame(source_row=source_rows, date=d$WorkDate[source_rows],
+                    retained=keep_rows), file.path(out,"row-selection.csv"), row.names=FALSE)
+model5 <- lm(retained_formula(c("precipprob","precipcover","winddir","sealevelpressure","visibility","uvindex","severerisk"), d3_clean),
              data = d3_clean)
 summary(model5)
 
@@ -165,17 +186,22 @@ summary(model5)
 
 
 predicted_values <- predict(model5, newdata = d3_clean)
-actual_values <- d3_1$`1A`  # Assuming "y" is your target variable
+actual_values <- d3_clean$y
 residuals <- actual_values - predicted_values
 hist(residuals)
 
-model6 <- lm(y ~ precipcover+visibility+severerisk+moonphase, data=d3_1)
+model6 <- lm(retained_formula(c("precipcover","visibility","severerisk","moonphase"), d3_1), data=d3_1)
 summary(model6)
 
-hist(d3_1$`1A`, main = "Histogram of y", xlab = "y") 
+hist(d3_1$y, main = "Histogram of y", xlab = "y")
 
-# Get residuals from your model
-residuals <- residuals(model_poly)
+# Fit the polynomial trial before computing its residual diagnostics.
+poly_terms <- intersect(c("visibility","severerisk","moonphase"), names(d3_1))
+if("precipcover" %in% names(d3_1) && length(unique(d3_1$precipcover)) > 2)
+  poly_terms <- c("poly(precipcover, 2)", poly_terms)
+poly_formula <- reformulate(poly_terms, response="y")
+model_poly_initial <- lm(poly_formula, data=d3_1)
+residuals <- residuals(model_poly_initial)
 
 # Plot boxplot to visualize outliers
 boxplot(residuals, main = "Residuals Boxplot", ylab = "Residuals", col = "lightblue")
@@ -193,8 +219,7 @@ upper_bound <- Q3 + 1.5 * IQR_res
 outlier_indices <- which(residuals < lower_bound | residuals > upper_bound)
 outlier_indices
 
-d3_clean <- d3_1[-c(242, 262), ]
-model_poly <- lm(`1A` ~ poly(precipcover, 2) + visibility + severerisk + moonphase, data = d3_clean)
+model_poly <- lm(poly_formula, data = d3_clean)
 summary(model_poly)
 hist(residuals)
 
@@ -203,12 +228,13 @@ library(ggplot2)
 predictions <- predict(model_poly, newdata = d3_1)
 
 # Create a data frame for plotting
-plot_data <- data.frame(Actual = d3_1$`1A`, Predicted = predictions)
-ggplot(plot_data, aes(x = Actual, y = Predicted)) +
+plot_data <- data.frame(Actual = d3_1$y, Predicted = predictions)
+print(ggplot(plot_data, aes(x = Actual, y = Predicted)) +
   geom_point(color = "blue", size = 3) +  # Scatter plot
   geom_abline(slope = 1, intercept = 0, color = "red", linetype = "dashed") +  # Ideal 1:1 line
   labs(title = "Predicted vs. Actual Values",
        x = "Actual Values",
        y = "Predicted Values") +
-  theme_minimal()
+  theme_minimal())
+dev.off()
 

@@ -1,11 +1,14 @@
 # Random Forest transfer between two selected Route 1A time segments.
 source("functions.R");source("prepare.R")
+source("src/time_segments.R")
 args<-commandArgs(trailingOnly=TRUE)
 input<-if(length(args)) args[1] else "data/off_campus_routes.csv"
 out<-if(length(args)>1) args[2] else "outputs/segment-comparison"
 d<-read_citybus(input)
 for(route in c("1A","2B","6A","6B")) d[[route]][is.na(d[[route]])]<-mean(d[[route]],na.rm=TRUE)
-training<-d[240:268,];test<-d[179:209,]
+# Existing segments: September 1-30 (29 rows) and July 1-August 1 (31 rows).
+training<-select_citybus_segment(d,"exploratory")
+test<-select_citybus_segment(d,"segment_evaluation")
 stopifnot(!length(intersect(training$WorkDate,test$WorkDate)))
 ctrl<-caret::trainControl(method="cv",number=3,classProbs=FALSE,
   summaryFunction=caret::defaultSummary,allowParallel=TRUE)

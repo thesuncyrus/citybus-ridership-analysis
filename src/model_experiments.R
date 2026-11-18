@@ -4,6 +4,7 @@ if (!length(args)) stop("Supply the authorized off-campus workbook.")
 workbook <- args[1]
 library(readxl)
 library(caret)
+source("src/time_segments.R")
 d <- if(grepl("[.]csv$",workbook,ignore.case=TRUE)) read.csv(workbook,check.names=FALSE) else read_xlsx(workbook,sheet=2,col_names=TRUE)
 d <- as.data.frame(d)
 d$WorkDate <- as.Date(d$WorkDate)
@@ -27,8 +28,8 @@ d$`6B` = ifelse(is.na(d$`6B`),
 
 cor(d[2:ncol(d)])
 
-## 1A: Sep - Nov
-d3_1 <- d[240:268, c(2, 6:ncol(d))]
+## 1A: September 1-30, 2023 (29 observations in the supplied table).
+d3_1 <- select_citybus_segment(d, "exploratory")[, c(2, 6:ncol(d)), drop = FALSE]
 
 
 ### Split dataset into training and test set
@@ -251,8 +252,9 @@ actual <- test_d$`1A`
 (rmse <- sqrt(mean((rf_preds - actual)^2)))
 
 
-#### Train on Different set: July, August, November 
-d4_1 <- d[179:297, c(2, 6:ncol(d))]
+#### July 1-November 30, 2023: July, August, September and November
+# are present in the supplied table (119 observations; October is absent).
+d4_1 <- select_citybus_segment(d, "comparison")[, c(2, 6:ncol(d)), drop = FALSE]
 
 
 set.seed(1234) # set a seed so you can replicate your results
