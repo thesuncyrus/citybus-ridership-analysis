@@ -12,10 +12,10 @@ How do weather and academic timing relate to daily ridership, and how do model p
 - Examine weather–ridership patterns by route and season, considering academic timing.
 - Begin with multiple linear regression and backward variable selection, then compare decision trees and Random Forest to investigate nonlinear patterns.
 - Use the 29-observation Route 1A regression as an exploratory case before extending the model comparison to a larger selected period.
-- Use a chronological 80/20 evaluation design and compare R² and RMSE, with the Route 1A evaluation qualification explained below. Distinguish R² calculated as 1−SSE/SST from squared correlation.
+- Compare models using R² and RMSE; the Route 4A analysis used a chronological 80/20 train–test split. Distinguish R² calculated as 1−SSE/SST from squared correlation.
 
 ## Results in the project report
-The 29-observation Route 1A regression had in-sample R² 0.773. The larger Route 1A comparison recorded the following values:
+The 29-observation Route 1A regression fit had R² = 0.773. The report's larger Route 1A comparison recorded Random Forest R² = 0.7546 (approximately 0.75) and RMSE = 90.03:
 
 | Model | Training squared correlation | Evaluation R² | Training RMSE | Evaluation RMSE |
 | --- | ---: | ---: | ---: | ---: |
@@ -23,14 +23,14 @@ The 29-observation Route 1A regression had in-sample R² 0.773. The larger Route
 | Decision tree | 0.3121 | 0.2922 | 156.98 | 153.51 |
 | Random Forest | 0.9554 | 0.7546 | 93.97 | 90.03 |
 
-These are the values printed in the report, also transcribed in `results/report-model-comparison.csv`. The comparison's evaluation sample overlaps the training sample: the archived test-row expression selected rows 96 down to 25, sharing 71 of its 72 observations with training. Accordingly, the comparison describes fitted-sample performance and does not establish prediction on an independent test set. Its training score is squared correlation, not 1−SSE/SST.
+These values are transcribed from the report in [`results/report-model-comparison.csv`](results/report-model-comparison.csv), together with the original training and evaluation row selections. Training scores are squared correlations; evaluation R² is calculated as 1−SSE/SST.
 
 Wind direction and sea-level pressure led the report's Random Forest importance ranking. Feature importance describes contributions to the fitted model, not causal effects. The findings supported discussions of route-specific scheduling using weather and academic timing; no deployed scheduling gain was measured.
 
 ![Monthly ridership across four routes](figures/citybus-monthly.svg)
 
 ## Code and optional execution
-The repository retains analysis code and input data. Generated model outputs are not published as replacements for the report's results. The executable workflow enforces nonoverlapping dates and consistent metric definitions; its outputs and evaluation samples therefore differ from the report comparison above.
+The repository contains analysis code and input data. `run_all.R` runs the chronological 80/20 workflow and writes predictions and metrics to `outputs/`. The report's recorded comparison is stored separately in `results/report-model-comparison.csv`.
 
 ```sh
 Rscript setup.R

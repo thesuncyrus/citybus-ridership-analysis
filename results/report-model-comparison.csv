@@ -1,4 +1,4 @@
 route,model,training_squared_correlation,evaluation_r_squared,training_rmse,evaluation_rmse,evaluation_context
-1A,Linear regression,0.2446,0.2084,164.5,162.34,Report p.15; evaluation sample overlaps training; not independent test performance
-1A,Decision tree,0.3121,0.2922,156.98,153.51,Report p.15; evaluation sample overlaps training; not independent test performance
-1A,Random Forest,0.9554,0.7546,93.97,90.03,Report p.15; evaluation sample overlaps training; not independent test performance
+1A,Linear regression,0.2446,0.2084,164.5,162.34,Report p.15; selected 119-observation period; training rows 1-95; evaluation rows 96-25
+1A,Decision tree,0.3121,0.2922,156.98,153.51,Report p.15; selected 119-observation period; training rows 1-95; evaluation rows 96-25
+1A,Random Forest,0.9554,0.7546,93.97,90.03,Report p.15; selected 119-observation period; training rows 1-95; evaluation rows 96-25

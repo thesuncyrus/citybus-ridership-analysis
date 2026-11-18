@@ -44,7 +44,7 @@ save_plot("citybus-weekday.svg", ggplot(weekly, aes(period, mean, colour = route
   scale_x_continuous(breaks = 1:7, labels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")) +
   labs(title = "Service-day patterns differ by route", x = NULL, y = "Mean daily ridership measure", colour = "Route",
     caption = "Missing service or reporting days cannot be distinguished from the workbook alone."))
-# Restrict correlation exploration to training dates so it cannot drive test selection.
+# Calculate weather correlations for the selected training dates.
 tr <- chronological_split(select_period(d))$train
 features <- c("temp", "humidity", "precip", "snow", "windspeed", "winddir", "cloudcover", "visibility")
 corr <- do.call(rbind, lapply(routes, function(r) do.call(rbind, lapply(features, function(f) {
@@ -60,6 +60,6 @@ save_plot("citybus-correlations.svg", ggplot(corr, aes(feature, route, fill = co
     caption = "Pairwise-complete observations. Associations do not establish weather effects.") +
   theme(axis.text.x = element_text(angle = 35, hjust = 1)), height = 4)
 writeLines(c("Retrospective EDA of supplied workbook; no target imputation or outlier deletion.",
-  "Correlations use training dates only. Full-period summaries were not used to select model settings.",
+  "Weather correlations: selected-period training dates. Monthly and weekday summaries: full period.",
   paste("Input MD5:", tools::md5sum(args[1])), capture.output(sessionInfo())), file.path(out, "eda-run-info.txt"))
 print(route_summary)
