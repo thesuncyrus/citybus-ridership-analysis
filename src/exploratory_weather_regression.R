@@ -1,4 +1,5 @@
-# Exploratory regression, transformations and interaction terms.
+# Exploratory regression and transformations.
+# Original interaction trials are in archive/week08_route6a_interactions.R.
 # Predictor screening and formula selection use the exploratory sample.
 args <- commandArgs(trailingOnly=TRUE)
 if (!length(args)) stop("Supply the authorized off-campus workbook.")
