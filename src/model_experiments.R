@@ -33,24 +33,23 @@ d3_1 <- select_citybus_segment(d, "exploratory")[, c(2, 6:ncol(d)), drop = FALSE
 
 
 ### Split dataset into training and test set
-train <- d3_1[1:20, ]
-test <- d3_1[21:29, ]
+train <- d3_1[citybus_config$experiments$small_train_rows, ]
+test <- d3_1[citybus_config$experiments$small_test_rows, ]
 
 ### Select variables through variable selection
 library(leaps)
 mlrB <- regsubsets(`1A` ~ ., data = d3_1,
                    
-                   , nbest = 1
-                   , intercept = T       # should model have intercept term (B0)?
-                   , method = "backward" # forward, backward, sequential, exhaustive
-                   , nvmax = NULL        # NULL for no limit on number of variables
+                   , nbest = citybus_config$variable_selection$nbest
+                   , intercept = citybus_config$variable_selection$intercept       # should model have intercept term (B0)?
+                   , method = citybus_config$variable_selection$method # forward, backward, sequential, exhaustive
+                   , nvmax = citybus_config$variable_selection$nvmax        # NULL for no limit on number of variables
 )
 summary(mlrB)$which[which.max(summary(mlrB)$adjr2),]
 
 ### Train & Test Multiple Linear Regression
 # MLR on sequential training and test set
-model1 <- lm(`1A` ~ tempmax+temp+feelslikemax+feelslikemin+feelslike+dew+precip+precipcover+sealevelpressure+cloudcover+uvindex+
-               severerisk, data=train)
+model1 <- lm(citybus_config$experiments$small_formula, data=train)
 summary(model1) # R-squared train: 96.94
 pred <- predict(model1, newdata = train)
 rmse <- sqrt(mean((pred - train$`1A`)^2))
@@ -67,20 +66,19 @@ actual <- test$`1A`
 
 
 ### Method 2 of splitting: Randomly split
-set.seed(1234) # set a seed so you can replicate your results
+set.seed(citybus_config$experiments$seed) # set a seed so you can replicate your results
 library(caret)
 
 # identify records that will be used in the training set. Here we are doing a
 inTrain <- createDataPartition(y = d3_1$`1A`,   # outcome variable
-                               p = .70,   # % of training data you want
+                               p = citybus_config$experiments$small_train_fraction,   # % of training data you want
                                list = F)
 # create your partitions
 train_d <- d3_1[inTrain,]  # training data set
 test_d <- d3_1[-inTrain,]  # test data set
 
 # MLR on ramdom split of train and test sets: 
-model1.1 <- lm(`1A` ~ tempmax+temp+feelslikemax+feelslikemin+feelslike+dew+precip+precipcover+sealevelpressure+cloudcover+uvindex+
-               severerisk, data=train_d)
+model1.1 <- lm(citybus_config$experiments$small_formula, data=train_d)
 summary(model1.1) # R-squared train: 85.71
 pred <- predict(model1.1, newdata = train_d)
 rmse <- sqrt(mean((pred - train_d$`1A`)^2))
@@ -96,26 +94,16 @@ actual <- test_d$`1A`
 (rmse <- sqrt(mean((rf_preds - actual)^2)))
 
 ### Model type 2: XGBoost
-ctrl <- trainControl(method = "none",
+ctrl <- trainControl(method = citybus_config$experiments$resampling,
                      classProbs = FALSE,
                      summaryFunction = defaultSummary,
                      allowParallel = TRUE)
 
 # Manually specify the model hyperparameters
-xgb_grid <- expand.grid(
-  nrounds = 100,
-  max_depth = 6,
-  eta = 0.3,
-  gamma = 0,
-  colsample_bytree = 1,
-  min_child_weight = 1,
-  subsample = 1
-)
+xgb_grid <- citybus_config$experiments$xgb_grid
 
 # Train the model
-model2 <- train(`1A` ~ tempmax + temp + feelslikemax + feelslikemin + feelslike +
-                  dew + precip + precipcover + sealevelpressure + cloudcover +
-                  uvindex + severerisk,
+model2 <- train(citybus_config$experiments$small_formula,
                 data = train_d,
                 method = "xgbTree",
                 trControl = ctrl,
@@ -148,18 +136,16 @@ actual <- test_d$`1A`
 library(caret)
 
 # Train control with no resampling
-ctrl <- trainControl(method = "none",
+ctrl <- trainControl(method = citybus_config$experiments$resampling,
                      classProbs = FALSE,
                      summaryFunction = defaultSummary,
                      allowParallel = TRUE)
 
 # Manually specify the number of neighbors (k)
-knn_grid <- expand.grid(k = 5)  # choose any k you want (e.g., 5)
+knn_grid <- expand.grid(k = citybus_config$experiments$knn_k)  # choose any k you want (e.g., 5)
 
 # Train the model
-model3 <- train(`1A` ~ tempmax + temp + feelslikemax + feelslikemin + feelslike +
-                  dew + precip + precipcover + sealevelpressure + cloudcover +
-                  uvindex + severerisk,
+model3 <- train(citybus_config$experiments$small_formula,
                 data = train_d,
                 method = "knn",
                 trControl = ctrl,
@@ -186,9 +172,7 @@ library(rpart)
 library(rpart.plot)  # For nice tree plots
 
 # Fit the regression tree model
-tree_model <- rpart(`1A` ~ tempmax + temp + feelslikemax + feelslikemin + feelslike +
-                      dew + precip + precipcover + sealevelpressure + cloudcover +
-                      uvindex + severerisk,
+tree_model <- rpart(citybus_config$experiments$small_formula,
                     data = train_d,
                     method = "anova")  # 'anova' for regression
 
@@ -218,18 +202,16 @@ actual <- test_d$`1A`
 library(randomForest)
 
 # Set training control to no resampling
-ctrl <- trainControl(method = "none",
+ctrl <- trainControl(method = citybus_config$experiments$resampling,
                      classProbs = FALSE,
                      summaryFunction = defaultSummary,
                      allowParallel = TRUE)
 
 # Set the number of variables randomly sampled as candidates at each split (mtry)
-tune_grid <- expand.grid(mtry = 3)  # You can change this value
+tune_grid <- expand.grid(mtry = citybus_config$experiments$mtry)  # You can change this value
 
 # Train the random forest model (no CV)
-model7 <- train(`1A` ~ tempmax + temp + feelslikemax + feelslikemin + feelslike + 
-                  dew + precip + precipcover + sealevelpressure + cloudcover + 
-                  uvindex + severerisk,
+model7 <- train(citybus_config$experiments$small_formula,
                 data = train_d,
                 method = "rf",
                 trControl = ctrl,
@@ -257,11 +239,11 @@ actual <- test_d$`1A`
 d4_1 <- select_citybus_segment(d, "comparison")[, c(2, 6:ncol(d)), drop = FALSE]
 
 
-set.seed(1234) # set a seed so you can replicate your results
+set.seed(citybus_config$experiments$seed) # set a seed so you can replicate your results
 
 # identify records that will be used in the training set. Here we are doing a
 inTrain <- createDataPartition(y = d4_1$`1A`,   # outcome variable
-                               p = .80,   # % of training data you want
+                               p = citybus_config$experiments$comparison_train_fraction,   # % of training data you want
                                list = F)
 # create your partitions
 train_d <- d4_1[inTrain,]  # training data set
@@ -270,15 +252,15 @@ test_d <- d4_1[-inTrain,]  # test data set
 # Select variables on train set
 mlrB <- regsubsets(`1A` ~ ., data = train_d,
                    
-                   , nbest = 1
-                   , intercept = T       # should model have intercept term (B0)?
-                   , method = "backward" # forward, backward, sequential, exhaustive
-                   , nvmax = NULL        # NULL for no limit on number of variables
+                   , nbest = citybus_config$variable_selection$nbest
+                   , intercept = citybus_config$variable_selection$intercept       # should model have intercept term (B0)?
+                   , method = citybus_config$variable_selection$method # forward, backward, sequential, exhaustive
+                   , nvmax = citybus_config$variable_selection$nvmax        # NULL for no limit on number of variables
 )
 summary(mlrB)$which[which.max(summary(mlrB)$adjr2),]
 
 # MLR
-model1 <- lm(`1A` ~ tempmax+tempmin+temp+dew+humidity+snowdepth+windgust+windspeed+solarradiation+solarenergy+uvindex,
+model1 <- lm(citybus_config$experiments$comparison_formula,
              data = train_d)
 summary(model1)  # R-squared train: 23.32
 ## Evaluate model 1 on test set:
@@ -295,7 +277,7 @@ actual <- test_d$`1A`
 # Load required package
 
 # Fit the regression tree model
-tree_model <- rpart(`1A` ~ tempmax+tempmin+temp+dew+humidity+snowdepth+windgust+windspeed+solarradiation+solarenergy+uvindex,
+tree_model <- rpart(citybus_config$experiments$comparison_formula,
                     data = train_d,
                     method = "anova")  # 'anova' for regression
 
@@ -322,8 +304,8 @@ actual <- test_d$`1A`
 
 
 ### Train and Test sequentially split
-train <- d4_1[1:95, ]
-test <- d4_1[96:nrow(d4_1), ]
+train <- d4_1[citybus_config$experiments$comparison_train_rows, ]
+test <- d4_1[citybus_config$experiments$comparison_test_start:nrow(d4_1), ]
 
 tree_model <- rpart(`1A` ~ .,
                     data = train,
@@ -426,13 +408,13 @@ actual <- test$`1A`
 
 ### Random Forest
 # Set training control to no resampling
-ctrl <- trainControl(method = "none",
+ctrl <- trainControl(method = citybus_config$experiments$resampling,
                      classProbs = FALSE,
                      summaryFunction = defaultSummary,
                      allowParallel = TRUE)
 
 # Set the number of variables randomly sampled as candidates at each split (mtry)
-tune_grid <- expand.grid(mtry = 3)  # You can change this value
+tune_grid <- expand.grid(mtry = citybus_config$experiments$mtry)  # You can change this value
 
 # Train the random forest model (no CV)
 model7 <- train(`1A` ~ .,

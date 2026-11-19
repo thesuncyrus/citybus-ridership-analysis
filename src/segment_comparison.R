@@ -5,17 +5,16 @@ args<-commandArgs(trailingOnly=TRUE)
 input<-if(length(args)) args[1] else "data/off_campus_routes.csv"
 out<-if(length(args)>1) args[2] else "outputs/segment-comparison"
 d<-read_citybus(input)
-for(route in c("1A","2B","6A","6B")) d[[route]][is.na(d[[route]])]<-mean(d[[route]],na.rm=TRUE)
+for(route in citybus_config$routes) d[[route]][is.na(d[[route]])]<-mean(d[[route]],na.rm=TRUE)
 # Existing segments: September 1-30 (29 rows) and July 1-August 1 (31 rows).
-training<-select_citybus_segment(d,"exploratory")
-test<-select_citybus_segment(d,"segment_evaluation")
+training<-select_citybus_segment(d,citybus_config$segment_forest$train_segment)
+test<-select_citybus_segment(d,citybus_config$segment_forest$test_segment)
 stopifnot(!length(intersect(training$WorkDate,test$WorkDate)))
-ctrl<-caret::trainControl(method="cv",number=3,classProbs=FALSE,
+ctrl<-caret::trainControl(method=citybus_config$segment_forest$resampling,number=citybus_config$segment_forest$folds,classProbs=FALSE,
   summaryFunction=caret::defaultSummary,allowParallel=TRUE)
 # No fixed seed was specified for this segment experiment; CV/forest fits can vary.
-model<-caret::train(`1A`~tempmax+temp+feelslikemax+feelslikemin+feelslike+dew+
-  precip+precipcover+sealevelpressure+cloudcover+uvindex+severerisk,
-  data=training,method="rf",trControl=ctrl,tuneGrid=expand.grid(mtry=2:6),metric="RMSE")
+model<-caret::train(citybus_config$segment_forest$formula,
+  data=training,method="rf",trControl=ctrl,tuneGrid=expand.grid(mtry=citybus_config$segment_forest$mtry),metric="RMSE")
 predictions<-predict(model,test)
 metrics<-regression_metrics(test$`1A`,predictions)
 dir.create(out,recursive=TRUE,showWarnings=FALSE)

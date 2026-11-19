@@ -29,10 +29,10 @@ dim(d)
 # Identify Correlated Predictors and remove them
 # calculate correlation matrix 
 descrCor <-  cor(d[,6:ncol(d)])
-highCorr <- sum(abs(descrCor[upper.tri(descrCor)]) > .85)
+highCorr <- sum(abs(descrCor[upper.tri(descrCor)]) > citybus_config$screening$full_correlation_cutoff)
 summary(descrCor[upper.tri(descrCor)])
 
-highlyCorDescr <- findCorrelation(descrCor, cutoff = 0.85)
+highlyCorDescr <- findCorrelation(descrCor, cutoff = citybus_config$screening$full_correlation_cutoff)
 filteredDescr <- drop_columns(d[,6:ncol(d),drop=FALSE], highlyCorDescr)
 descrCor2 <- cor(filteredDescr)                  # calculate a new cor matrix
 # summarize those correlations to see if all features are now within our range
@@ -66,7 +66,7 @@ source_rows <- citybus_segment_rows(d, "exploratory")
 d3_1 <- d[source_rows, c(2, 6:ncol(d)), drop=FALSE]
 
 
-preProcValues <- preProcess(d3_1[,2:ncol(d3_1)], method = c("range"))
+preProcValues <- preProcess(d3_1[,2:ncol(d3_1)], method = citybus_config$screening$initial_preprocess)
 d3_1 <- predict(preProcValues, d3_1)
 
 if("tempmin" %in% names(d3_1)) hist(d3_1$tempmin)
@@ -75,7 +75,7 @@ d3_copy <- d3_1
 d3_copy$`1A` <- log(d3_copy$`1A` + 1)  # Adding 1 to handle zero values if they exist
 d3_copy$y <- NULL
 
-model4 <- lm(retained_formula(c("precipprob","precipcover","winddir","sealevelpressure","cloudcover","visibility","severerisk"), d3_copy, "1A"), data=d3_copy)
+model4 <- lm(retained_formula(citybus_config$screening$log_predictors, d3_copy, "1A"), data=d3_copy)
 summary(model4)
 
 
@@ -88,15 +88,15 @@ summary(model4)
 
 mlrB <- leaps::regsubsets(`1A` ~ ., data = d3_1,
                    
-                   , nbest = 1           # 1 best model for each number of predictors
-                   , intercept = T       # should model have intercept term (B0)?
-                   , method = "backward" # forward, backward, sequential, exhaustive
-                   , nvmax = NULL        # NULL for no limit on number of variables
+                   , nbest = citybus_config$variable_selection$nbest           # 1 best model for each number of predictors
+                   , intercept = citybus_config$variable_selection$intercept       # should model have intercept term (B0)?
+                   , method = citybus_config$variable_selection$method # forward, backward, sequential, exhaustive
+                   , nvmax = citybus_config$variable_selection$nvmax        # NULL for no limit on number of variables
 )
 summary(mlrB)$which[which.max(summary(mlrB)$adjr2),]
 
 # Model 4:
-model4 <- lm(retained_formula(c("precipprob","precipcover","sealevelpressure","visibility","severerisk"), d3_1, "1A"),
+model4 <- lm(retained_formula(citybus_config$screening$initial_predictors, d3_1, "1A"),
              data = d3_1)
 summary(model4)
 
@@ -111,12 +111,12 @@ d3_1 <- d3_1[, c(TRUE,!nzv$zeroVar[2:ncol(d3_1)]), drop=FALSE]
 
 library(caret)
 descrCor <-  cor(d3_1[,2:ncol(d3_1)])                           # correlation matrix
-highCorr <- sum(abs(descrCor[upper.tri(descrCor)]) > .75) # num Xs with cor > t
+highCorr <- sum(abs(descrCor[upper.tri(descrCor)]) > citybus_config$screening$segment_correlation_cutoff) # num Xs with cor > t
 summary(descrCor[upper.tri(descrCor)])                    # summarize the cors
 
 # which columns in your correlation matrix have a correlation greater than some
 # specified absolute cutoff. Find them and remove them
-highlyCorDescr <- findCorrelation(descrCor, cutoff = 0.75)
+highlyCorDescr <- findCorrelation(descrCor, cutoff = citybus_config$screening$segment_correlation_cutoff)
 
 sum(is.na(descrCor))  # Count NA values
 colSums(is.na(d3_1))  # Identify columns with missing values
@@ -155,7 +155,7 @@ d3_1 <- cbind(y, d3_1)
 
 rm(y, comboInfo)  # clean up
 
-preProcValues <- preProcess(d3_1[,2:ncol(d3_1)], method = c("center", "scale", "YeoJohnson"))
+preProcValues <- preProcess(d3_1[,2:ncol(d3_1)], method = citybus_config$screening$final_preprocess)
 # Step 2) the predict() function actually does the transformation using the 
 # parameters identified in the previous step. Weird that it uses predict() to do 
 # this, but it does!
@@ -163,20 +163,20 @@ d3_1 <- predict(preProcValues, d3_1)
 
 mlrB <- leaps::regsubsets(y ~ ., data = d3_1,
                    
-                   , nbest = 1           # 1 best model for each number of predictors
-                   , intercept = T       # should model have intercept term (B0)?
-                   , method = "backward" # forward, backward, sequential, exhaustive
-                   , nvmax = NULL        # NULL for no limit on number of variables
+                   , nbest = citybus_config$variable_selection$nbest           # 1 best model for each number of predictors
+                   , intercept = citybus_config$variable_selection$intercept       # should model have intercept term (B0)?
+                   , method = citybus_config$variable_selection$method # forward, backward, sequential, exhaustive
+                   , nvmax = citybus_config$variable_selection$nvmax        # NULL for no limit on number of variables
 )
 summary(mlrB)$which[which.max(summary(mlrB)$adjr2),]
 
 # The original exclusions refer to rows in the full input table.
-excluded_source_rows <- c(242L, 262L)
+excluded_source_rows <- citybus_config$screening$excluded_source_rows
 keep_rows <- !source_rows %in% excluded_source_rows
 d3_clean <- d3_1[keep_rows, , drop=FALSE]
 write.csv(data.frame(source_row=source_rows, date=d$WorkDate[source_rows],
                     retained=keep_rows), file.path(out,"row-selection.csv"), row.names=FALSE)
-model5 <- lm(retained_formula(c("precipprob","precipcover","winddir","sealevelpressure","visibility","uvindex","severerisk"), d3_clean),
+model5 <- lm(retained_formula(citybus_config$screening$cleaned_predictors, d3_clean),
              data = d3_clean)
 summary(model5)
 
@@ -190,7 +190,7 @@ actual_values <- d3_clean$y
 residuals <- actual_values - predicted_values
 hist(residuals)
 
-model6 <- lm(retained_formula(c("precipcover","visibility","severerisk","moonphase"), d3_1), data=d3_1)
+model6 <- lm(retained_formula(citybus_config$screening$final_predictors, d3_1), data=d3_1)
 summary(model6)
 
 hist(d3_1$y, main = "Histogram of y", xlab = "y")

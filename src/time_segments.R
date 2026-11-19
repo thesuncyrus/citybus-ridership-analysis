@@ -1,9 +1,6 @@
 # Date bounds for the existing Route 1A exploratory experiments.
-citybus_time_segments <- list(
-  exploratory = as.Date(c("2023-09-01", "2023-09-30")),
-  comparison = as.Date(c("2023-07-01", "2023-11-30")),
-  segment_evaluation = as.Date(c("2023-07-01", "2023-08-01"))
-)
+source("config.R")
+citybus_time_segments <- citybus_config$segments
 
 citybus_segment_rows <- function(d, segment) {
   bounds <- citybus_time_segments[[segment]]

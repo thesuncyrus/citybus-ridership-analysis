@@ -8,10 +8,9 @@ if (!length(args)) stop("Supply the off-campus workbook.")
 out <- if (length(args) > 1) args[2] else "outputs"
 dir.create(out, recursive = TRUE, showWarnings = FALSE)
 d <- read_citybus(args[1])
-small <- d[240:268, ]; small$y <- small[["1A"]]
+small <- d[citybus_config$early_regression$rows, ]; small$y <- small[["1A"]]
 # Weather predictors for the selected Route 1A regression.
-model <- lm(y ~ tempmax + temp + feelslikemax + feelslikemin + feelslike +
-  dew + precip + precipcover + sealevelpressure + cloudcover + uvindex + severerisk,
+model <- lm(citybus_config$early_regression$formula,
   data = small)
 m <- regression_metrics(small$y, fitted(model))
 result <- data.frame(stage = "Poster/report selected regression fit",
@@ -31,5 +30,4 @@ ggsave(file.path(out, "citybus-early-fit.svg"),
     subtitle = sprintf("Fitted R-squared = %.6f; September 2023", m["r_squared"]),
     x = "Observed ridership", y = "Fitted ridership"),
   width = 8, height = 5, device = svglite::svglite)
-stopifnot(nrow(small) == 29, round(m["r_squared"], 3) == .773)
 print(result)

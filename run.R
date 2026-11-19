@@ -13,7 +13,7 @@ d <- read_citybus(args[1])
 split <- chronological_split(select_period(d, period))
 stopifnot(!length(intersect(split$train$WorkDate, split$test$WorkDate)))
 metrics <- predictions <- importances <- list(); models <- list()
-for (route in c("1A", "2B", "6A", "6B")) {
+for (route in citybus_config$routes) {
   tr <- split$train[is.finite(split$train[[route]]), , drop = FALSE]
   te <- split$test[is.finite(split$test[[route]]), , drop = FALSE]
   if (nrow(tr) < 20 || nrow(te) < 2) stop("Insufficient observed route outcomes.")
@@ -24,12 +24,12 @@ for (route in c("1A", "2B", "6A", "6B")) {
   train <- data.frame(y = tr[[route]], x, check.names = FALSE)
   test <- data.frame(y = te[[route]], xt, check.names = FALSE)
   linear <- lm(y ~ ., data = train)
-  set.seed(1234)
+  set.seed(citybus_config$chronological$seed)
   tree <- rpart::rpart(y ~ ., data = train, method = "anova")
-  set.seed(1234)
+  set.seed(citybus_config$chronological$seed)
   forest <- caret::train(y ~ ., data = train, method = "rf",
     trControl = caret::trainControl(method = "none", allowParallel = FALSE),
-    tuneGrid = data.frame(mtry = 3), ntree = 500, metric = "RMSE")
+    tuneGrid = data.frame(mtry = citybus_config$chronological$mtry), ntree = citybus_config$chronological$ntree, metric = "RMSE")
   models[[route]] <- list(linear = linear, tree = tree, forest = forest)
   for (partition in c("train", "test")) {
     target <- if (partition == "train") train else test
