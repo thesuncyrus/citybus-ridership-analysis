@@ -25,7 +25,7 @@ The 29-observation Route 1A regression fit had R² = 0.773. The report's larger 
 
 These values are transcribed from the report in [`results/report-model-comparison.csv`](results/report-model-comparison.csv), together with the evaluation context. Training scores are squared correlations; evaluation R² is calculated as 1−SSE/SST.
 
-Wind direction and sea-level pressure led the report's Random Forest importance ranking. Feature importance describes contributions to the fitted model, not causal effects. The findings supported discussions of route-specific scheduling using weather and academic timing; no deployed scheduling gain was measured.
+Wind direction and sea-level pressure led the report's Random Forest importance ranking. The findings supported discussions of route-specific scheduling using weather and academic timing.
 
 ![Monthly ridership across four routes](figures/citybus-monthly.svg)
 
@@ -48,10 +48,10 @@ The report focuses on linear regression, decision trees and Random Forest. The r
 - `src/time_segments.R`: shared date bounds for these exploratory scripts.
 - [`archive/week08_route6a_interactions.R`](archive/week08_route6a_interactions.R): original Route 6A regression trials with interaction terms, transcribed from the Week 8 analysis. Examples include `humidity * snow`, `precip * precipcover`, and `sealevelpressure * visibility`.
 
-The archived interaction trials are supplementary exploration, not a claim that manually constructed interaction terms were used in the final Route 1A model comparison. The excerpt depends on the original session's prepared data, is not part of `run_all.R`, and supplies no new performance or significance claims.
+The archived interaction trials use the original session’s prepared data and run separately from `run_all.R`.
 
 Run the predictor-screening script from the repository root with `Rscript src/exploratory_weather_regression.R data/off_campus_routes.csv outputs/exploratory-weather`. Its diagnostics and source-row selection are written to that output directory. Synthetic execution checks run with `Rscript tests/exploratory_smoke.R`; the existing metric/date checks run with `Rscript tests.R`.
 
 Team and CityBus attribution should accompany reuse.
 
-[Portfolio case study](https://chau-nguyen-research.gabledmango1.chatgpt.site/citybus.html)
+[Portfolio case study](https://thesuncyrus.github.io/citybus.html)
